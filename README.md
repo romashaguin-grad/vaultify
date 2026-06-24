@@ -1,5 +1,8 @@
 # Vaultify — AI-Powered Cloud Storage
 
+## Live Demo
+[vaultify-wheat.vercel.app](https://vaultify-wheat.vercel.app)
+
 Vaultify is a next-generation cloud storage platform that lets you upload, organize, and manage your files with AI-powered features. Built with React, Appwrite, and ImageKit.
 
 ## Features
