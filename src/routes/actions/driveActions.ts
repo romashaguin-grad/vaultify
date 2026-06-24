@@ -40,41 +40,28 @@ export const createFolder = async (data: FolderData) => {
 };
 
 export const renameFile = async (data: RenameData) => {
-  const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
-  const response = await fetch(
-    `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/rename`,
-    {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Basic ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        filePath: data?.filePath,
-        newFileName: data?.newName,
-        purgeCache: true,
-      }),
-    },
+  const response = await functions.createExecution(
+    FN_ID,
+    JSON.stringify({
+      filePath: data.filePath,
+      newName: data.newName,
+    }),
+    false,
+    '/rename',
+    ExecutionMethod.POST,
   );
-  if (!response.ok) return { ok: false, error: 'Failed to rename file' };
-  return { ok: true, message: 'File renamed successfully' };
+  return JSON.parse(response.responseBody);
 };
 
 export const deleteFile = async (data: DeleteData) => {
-  const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
-  const response = await fetch(
-    `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/${data.fileId}`,
-    {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Basic ${API_KEY}`,
-      },
-    },
+  const response = await functions.createExecution(
+    FN_ID,
+    JSON.stringify({ fileId: data.fileId }),
+    false,
+    '/delete',
+    ExecutionMethod.POST,
   );
-  if (!response.ok) return { ok: false, error: 'Failed to delete file' };
-  return { ok: true, message: 'File deleted successfully' };
+  return JSON.parse(response.responseBody);
 };
 
 export const driveActions: ActionFunction = async ({ request }) => {
