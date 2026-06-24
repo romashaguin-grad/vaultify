@@ -3,14 +3,12 @@
  * @license Apache-2.0
  */
 
-/**
- * Custom modules
- */
 import { account, OAuthProvider } from './appwrite';
 
 export const handleOAuthLogin = () => {
   account.createOAuth2Session({
     provider: OAuthProvider.Google,
-    success: 'http://localhost:5173/drive/home',
+    success: `${window.location.origin}/drive/home`,
+    failure: `${window.location.origin}/auth/login`,
   });
 };
