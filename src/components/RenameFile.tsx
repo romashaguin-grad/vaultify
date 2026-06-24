@@ -7,7 +7,7 @@
  * Node modules
  */
 import { useState, useEffect, useCallback } from 'react';
-import { useFetcher, useFetchers } from 'react-router';
+import { useFetcher } from 'react-router';
 import { toast } from 'sonner';
 
 /**

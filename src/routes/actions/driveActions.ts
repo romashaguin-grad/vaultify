@@ -3,28 +3,30 @@
  * @license Apache-2.0
  */
 
-/**
- * Node modules
- */
 import axios from 'axios';
-
-/**
- * Custom modules
- */
 import { getCurrentUserFolder } from '@/lib/appwrite';
-
-/**
- * Types
- */
 import type { AxiosRequestConfig } from 'axios';
 import type { ActionFunction } from 'react-router';
 
-/**
- * Constants
- */
 const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
 
-export const createFolder = async (data) => {
+interface FolderData {
+  folderName: string;
+  parentFolderPath?: string;
+  currentFolderName?: string;
+}
+
+interface RenameData {
+  filePath?: string;
+  newName?: string;
+  currentFolderName?: string | null;
+}
+
+interface DeleteData {
+  fileId: string;
+}
+
+export const createFolder = async (data: FolderData) => {
   const options: AxiosRequestConfig = {
     method: 'POST',
     url: 'https://api.imagekit.io/v1/folder',
@@ -47,7 +49,7 @@ export const createFolder = async (data) => {
   }
 };
 
-export const renameFile = async (data) => {
+export const renameFile = async (data: RenameData) => {
   const options: AxiosRequestConfig = {
     method: 'PUT',
     url: `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/rename`,
@@ -71,7 +73,7 @@ export const renameFile = async (data) => {
   }
 };
 
-export const deleteFile = async (data) => {
+export const deleteFile = async (data: DeleteData) => {
   const options: AxiosRequestConfig = {
     method: 'DELETE',
     url: `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/${data.fileId}`,
@@ -97,10 +99,11 @@ export const driveActions: ActionFunction = async ({ request }) => {
     newName?: string;
     folderName?: string;
     parentFolderPath?: string;
+    fileId?: string;
   };
 
   if (request.method === 'POST') {
-    return await createFolder({ ...data, currentFolderName });
+    return await createFolder({ ...data, currentFolderName } as FolderData);
   }
 
   if (request.method === 'PUT') {
@@ -108,6 +111,6 @@ export const driveActions: ActionFunction = async ({ request }) => {
   }
 
   if (request.method === 'DELETE') {
-    return await deleteFile({ ...data, currentFolderName });
+    return await deleteFile({ ...data } as DeleteData);
   }
 };
