@@ -3,17 +3,16 @@
  * @license Apache-2.0
  */
 
-import axios from 'axios';
-import { getCurrentUserFolder } from '@/lib/appwrite';
-import type { AxiosRequestConfig } from 'axios';
+import { getCurrentUserFolder, functions } from '@/lib/appwrite';
+import { ExecutionMethod } from 'appwrite';
 import type { ActionFunction } from 'react-router';
 
-const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
+const FN_ID = import.meta.env.VITE_APPWRITE_FN_ID;
 
 interface FolderData {
   folderName: string;
   parentFolderPath?: string;
-  currentFolderName?: string;
+  currentFolderName?: string | null;
 }
 
 interface RenameData {
@@ -27,68 +26,55 @@ interface DeleteData {
 }
 
 export const createFolder = async (data: FolderData) => {
-  const options: AxiosRequestConfig = {
-    method: 'POST',
-    url: 'https://api.imagekit.io/v1/folder',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `Basic ${API_KEY}`,
-    },
-    data: {
+  const response = await functions.createExecution(
+    FN_ID,
+    JSON.stringify({
       folderName: data.folderName,
       parentFolderPath: `${data?.currentFolderName ?? ''}${data?.parentFolderPath ? `/${data.parentFolderPath}` : '/'}`,
-    },
-  };
-
-  try {
-    await axios.request(options);
-    return { ok: true, message: 'Folder created successfully' };
-  } catch (err) {
-    return { ok: false, error: err };
-  }
+    }),
+    false,
+    '/folder',
+    ExecutionMethod.POST,
+  );
+  return JSON.parse(response.responseBody);
 };
 
 export const renameFile = async (data: RenameData) => {
-  const options: AxiosRequestConfig = {
-    method: 'PUT',
-    url: `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/rename`,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `Basic ${API_KEY}`,
+  const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
+  const response = await fetch(
+    `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/rename`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Basic ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        filePath: data?.filePath,
+        newFileName: data?.newName,
+        purgeCache: true,
+      }),
     },
-    data: {
-      filePath: data?.filePath,
-      newFileName: data?.newName,
-      purgeCache: true,
-    },
-  };
-
-  try {
-    await axios.request(options);
-    return { ok: true, message: 'File renamed successfully' };
-  } catch (err) {
-    return { ok: false, error: err };
-  }
+  );
+  if (!response.ok) return { ok: false, error: 'Failed to rename file' };
+  return { ok: true, message: 'File renamed successfully' };
 };
 
 export const deleteFile = async (data: DeleteData) => {
-  const options: AxiosRequestConfig = {
-    method: 'DELETE',
-    url: `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/${data.fileId}`,
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Basic ${API_KEY}`,
+  const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
+  const response = await fetch(
+    `${import.meta.env.VITE_IMAGEKIT_API_ENDPOINT}/${data.fileId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Basic ${API_KEY}`,
+      },
     },
-  };
-
-  try {
-    await axios.request(options);
-    return { ok: true, message: 'File deleted successfully' };
-  } catch (err) {
-    return { ok: false, error: err };
-  }
+  );
+  if (!response.ok) return { ok: false, error: 'Failed to delete file' };
+  return { ok: true, message: 'File deleted successfully' };
 };
 
 export const driveActions: ActionFunction = async ({ request }) => {

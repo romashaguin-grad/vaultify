@@ -3,83 +3,59 @@
  * @license Apache-2.0
  */
 
-/**
- * Node modules
- */
 import { redirect } from 'react-router';
-import axios from 'axios';
-
-/**
- * Custom modules
- */
-import { getCurrentUserFolder } from '@/lib/appwrite';
-
-/**
- * Types
- */
+import { getCurrentUserFolder, functions } from '@/lib/appwrite';
+import { ExecutionMethod } from 'appwrite';
 import type { LoaderFunction } from 'react-router';
 import { AppwriteException } from 'appwrite';
-import type { AxiosRequestConfig } from 'axios';
 
-/**
- * Constants
- */
-const API_KEY = btoa(`${import.meta.env.VITE_IMAGEKIT_API_KEY}:`);
+const FN_ID = import.meta.env.VITE_APPWRITE_FN_ID;
 
 const getFiles = async (folderName: string, isRecent?: boolean) => {
-  const options: AxiosRequestConfig = {
-    method: 'GET',
-    url: import.meta.env.VITE_IMAGEKIT_API_ENDPOINT,
-    headers: { Accept: 'application/json', Authorization: `Basic ${API_KEY}` },
-    params: {
-      path: folderName || '',
+  const response = await functions.createExecution(
+    FN_ID,
+    JSON.stringify({
+      path: folderName,
       sort: isRecent ? 'DESC_CREATED' : 'ASC_CREATED',
-    },
-  };
-
-  try {
-    const { data } = await axios.request(options);
-    return data;
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
+    }),
+    false,
+    '/files',
+    ExecutionMethod.POST,
+  );
+  const data = JSON.parse(response.responseBody);
+  return data.data ?? [];
 };
 
 const getFolders = async (folderName: string) => {
-  const options: AxiosRequestConfig = {
-    method: 'GET',
-    url: import.meta.env.VITE_IMAGEKIT_API_ENDPOINT,
-    headers: { Accept: 'application/json', Authorization: `Basic ${API_KEY}` },
-    params: {
-      path: folderName || '',
+  const response = await functions.createExecution(
+    FN_ID,
+    JSON.stringify({
+      path: folderName,
       type: 'folder',
-    },
-  };
-
-  try {
-    const { data } = await axios.request(options);
-    return data;
-  } catch (err) {
-    console.log(err);
-    throw err;
-  }
+    }),
+    false,
+    '/files',
+    ExecutionMethod.POST,
+  );
+  const data = JSON.parse(response.responseBody);
+  return data.data ?? [];
 };
 
 export const driveFileLoader: LoaderFunction = async () => {
   try {
     const folderName = await getCurrentUserFolder();
 
-    const files = await getFiles(folderName!);
-    const recentFiles = await getFiles(folderName!, true);
-    const folders = await getFolders(folderName!);
+    const [files, recentFiles, folders] = await Promise.all([
+      getFiles(folderName!),
+      getFiles(folderName!, true),
+      getFolders(folderName!),
+    ]);
 
     return { files, recentFiles, folders };
   } catch (err) {
     if (err instanceof AppwriteException) {
       return redirect('/auth/login');
     }
-
     throw err;
   }
 };
